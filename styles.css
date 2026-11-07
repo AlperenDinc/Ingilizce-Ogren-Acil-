@@ -1,0 +1,226 @@
+/* IELTS Prep App - Custom Styles & Animations (Version 2.0 Mobile & PWA Ready) */
+
+/* Mobile Safe Area & Touch Enhancements */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
+html, body {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior-y: none;
+}
+
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+/* Custom Smooth Transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* 3D Flip Card Styles for Memory Game */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Interactive Reading Passage Highlights */
+.interactive-word {
+  display: inline-block;
+  padding: 1px 4px;
+  margin: 0 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border-bottom: 2px dashed rgba(99, 102, 241, 0.4);
+}
+
+.interactive-word:hover {
+  background-color: rgba(99, 102, 241, 0.2);
+  transform: translateY(-1px);
+  border-bottom-color: rgba(99, 102, 241, 0.8);
+}
+
+.interactive-word.target-vocab {
+  font-weight: 600;
+  background-color: rgba(245, 158, 11, 0.18);
+  border-bottom: 2px solid #f59e0b;
+  color: #b45309;
+}
+.dark .interactive-word.target-vocab {
+  background-color: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
+.interactive-sentence {
+  display: inline;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 2.1;
+}
+
+.interactive-sentence:hover {
+  background-color: rgba(99, 102, 241, 0.12);
+}
+
+.interactive-sentence.active-sentence {
+  background-color: rgba(99, 102, 241, 0.22);
+  border-left: 3px solid #6366f1;
+  padding-left: 8px;
+}
+
+/* Matching Game Card Styles */
+.matching-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+.matching-card:hover {
+  transform: scale(1.03);
+}
+.matching-card.selected {
+  border-color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+.matching-card.matched {
+  border-color: #10b981 !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  opacity: 0.65;
+  cursor: default;
+  transform: none;
+}
+.matching-card.wrong {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* Pulse Glow Effect for CTA */
+.pulse-glow {
+  box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+/* Custom Tooltip Animation */
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tree / Accordion Styles for Grammar Guide */
+.tree-category-header {
+  cursor: pointer;
+  user-select: none;
+}
+.tree-category-header:hover {
+  background-color: rgba(99, 102, 241, 0.08);
+}
+.tree-topic-item {
+  position: relative;
+  cursor: pointer;
+  padding-left: 1.25rem;
+}
+.tree-topic-item::before {
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
+/* Spaced Repetition Level Badges */
+.sr-badge-0 { background-color: #f1f5f9; color: #64748b; }
+.sr-badge-1 { background-color: #fee2e2; color: #b91c1c; } /* Due / Low */
+.sr-badge-2 { background-color: #fef3c7; color: #b45309; } /* Learning */
+.sr-badge-3 { background-color: #e0e7ff; color: #4338ca; } /* Reviewing */
+.sr-badge-4 { background-color: #d1fae5; color: #047857; } /* Mastered */
+
+.dark .sr-badge-0 { background-color: #1e293b; color: #94a3b8; }
+.dark .sr-badge-1 { background-color: #450a0a; color: #fca5a5; }
+.dark .sr-badge-2 { background-color: #451a03; color: #fde68a; }
+.dark .sr-badge-3 { background-color: #1e1b4b; color: #c7d2fe; }
+.dark .sr-badge-4 { background-color: #064e3b; color: #a7f3d0; }
+netlify-badge, 
+#netlify-badge, 
+.netlify-badge,
+div[id^="netlify-badge"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
