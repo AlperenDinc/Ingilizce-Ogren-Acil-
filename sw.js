@@ -1,5 +1,5 @@
 // IELTS 6.0 Academic Master - Service Worker (Offline Support & PWA)
-const CACHE_NAME = 'ielts-master-v2';
+const CACHE_NAME = 'ielts-master-v2.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

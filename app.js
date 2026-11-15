@@ -3,6 +3,271 @@
 // Deep Grammar Tree with Live Search, 50+ Roots & Affixes, Text-to-Speech
 
 document.addEventListener('DOMContentLoaded', () => {
+  // --- WORD DICTIONARY CACHE & BUILT-IN ACADEMIC MAPPING (FIX #1) ---
+  const wordTranslationCache = JSON.parse(localStorage.getItem('ielts_word_cache') || '{}');
+
+  const BUILTIN_COMMON_DICTIONARY = {
+    // Reading Passage & Academic Core Verbs
+    "investigate": { tr: "araştırmak, soruşturmak", enDef: "to carry out a systematic or formal inquiry to discover facts" },
+    "investigates": { tr: "araştırır, inceler", enDef: "inquires into something systematically" },
+    "investigating": { tr: "araştırarak, inceleyen", enDef: "carrying out research" },
+    "investigated": { tr: "araştırılmış, incelendi", enDef: "past inquiry" },
+    "influence": { tr: "etkilemek, tesir etmek", enDef: "have an influence on; impact" },
+    "influences": { tr: "etkiler, tesir eder", enDef: "exerts influence" },
+    "influencing": { tr: "etkileyerek", enDef: "affecting" },
+    "influenced": { tr: "etkilenmiş", enDef: "impacted" },
+    "warn": { tr: "uyarmak, ikaz etmek", enDef: "inform someone in advance of an impending risk" },
+    "warns": { tr: "uyarır", enDef: "gives warning" },
+    "warning": { tr: "uyarı, ikaz", enDef: "a statement or event that indicates a possible danger" },
+    "warned": { tr: "uyardı", enDef: "informed of danger" },
+    "fail": { tr: "başarısız olmak, yetersiz kalmak", enDef: "be unsuccessful in achieving a goal" },
+    "fails": { tr: "başarısız olur", enDef: "is unsuccessful" },
+    "failing": { tr: "başarısız olma, aksama", enDef: "not succeeding" },
+    "failed": { tr: "başarısız oldu", enDef: "did not succeed" },
+    "prioritize": { tr: "öncelik vermek", enDef: "treat something as being very important" },
+    "prioritizes": { tr: "öncelik verir", enDef: "gives priority to" },
+    "prioritizing": { tr: "önceliklendirerek", enDef: "giving priority" },
+    "prioritized": { tr: "önceliklendirilmiş", enDef: "treated as a priority" },
+    "face": { tr: "yüzleşmek, karşılaşmak", enDef: "confront and deal with a difficult situation" },
+    "faces": { tr: "yüzleşir, karşı karşıya kalır", enDef: "confronts" },
+    "facing": { tr: "karşı karşıya olan", enDef: "confronting" },
+    "faced": { tr: "karşılaştı", enDef: "confronted" },
+    "enhance": { tr: "artırmak, geliştirmek, yükseltmek", enDef: "intensify, increase, or further improve quality" },
+    "enhances": { tr: "artırır, geliştirir", enDef: "improves quality or value" },
+    "enhancing": { tr: "geliştirerek, artıran", enDef: "improving" },
+    "enhanced": { tr: "geliştirilmiş, artırılmış", enDef: "improved" },
+    "transform": { tr: "dönüştürmek, değiştirmek", enDef: "make a marked change in form, nature, or appearance" },
+    "transforms": { tr: "dönüştürür", enDef: "converts or changes fundamentally" },
+    "transforming": { tr: "dönüştürerek", enDef: "changing fundamentally" },
+    "transformed": { tr: "dönüştürülmüş", enDef: "fundamentally changed" },
+    "encourage": { tr: "teşvik etmek, cesaretlendirmek", enDef: "give support, confidence, or hope" },
+    "encourages": { tr: "teşvik eder", enDef: "promotes or supports" },
+    "encouraging": { tr: "cesaret verici, teşvik eden", enDef: "giving encouragement" },
+    "encouraged": { tr: "teşvik edildi", enDef: "inspired or supported" },
+    "adopt": { tr: "benimsemek, uygulamaya koymak", enDef: "choose to take up, follow, or use" },
+    "adopts": { tr: "benimser", enDef: "accepts or implements" },
+    "adopting": { tr: "benimseyerek", enDef: "implementing" },
+    "adopted": { tr: "benimsenmiş", enDef: "taken up or accepted" },
+    "balance": { tr: "dengelemek, denge", enDef: "keep or put in a steady position" },
+    "balancing": { tr: "dengeleyerek, dengeleme", enDef: "keeping equal or balanced" },
+    "balanced": { tr: "dengeli", enDef: "in a state of equilibrium" },
+    "establish": { tr: "kurmak, tesis etmek, oluşturmak", enDef: "set up on a firm or permanent basis" },
+    "establishes": { tr: "tesis eder, kurar", enDef: "sets up or institutes" },
+    "establishing": { tr: "kurarak", enDef: "instituting" },
+    "established": { tr: "yerleşik, köklü, kurulmuş", enDef: "having been in existence for a long time" },
+    "require": { tr: "gerektirmek, ihtiyaç duymak", enDef: "need for a particular purpose" },
+    "requires": { tr: "gerektirir", enDef: "demands" },
+    "requiring": { tr: "gerektirerek", enDef: "demanding" },
+    "required": { tr: "gerekli, zorunlu", enDef: "necessary" },
+    "provide": { tr: "sağlamak, temin etmek", enDef: "make available for use; supply" },
+    "provides": { tr: "sağlar, sunar", enDef: "supplies" },
+    "providing": { tr: "sağlayarak", enDef: "supplying" },
+    "provided": { tr: "sağlanan, temin edilmiş", enDef: "supplied" },
+    "support": { tr: "desteklemek, destek", enDef: "give assistance to" },
+    "supports": { tr: "destekler", enDef: "assists" },
+    "supporting": { tr: "destekleyerek", enDef: "giving support" },
+    "supported": { tr: "desteklenmiş", enDef: "assisted" },
+    "benefit": { tr: "fayda sağlamak, yararlanmak", enDef: "gain an advantage, profit from" },
+    "benefits": { tr: "faydalar, yararlar", enDef: "advantages" },
+    "benefiting": { tr: "yararlanarak", enDef: "profiting from" },
+    "benefited": { tr: "yararlandı", enDef: "gained advantage" },
+    "develop": { tr: "geliştirmek, gelişmek", enDef: "grow or cause to become more mature" },
+    "develops": { tr: "gelişir, geliştirir", enDef: "advances" },
+    "developing": { tr: "gelişmekte olan", enDef: "progressing" },
+    "developed": { tr: "gelişmiş", enDef: "advanced" },
+    "create": { tr: "yaratmak, oluşturmak", enDef: "bring something into existence" },
+    "creates": { tr: "yaratır, üretir", enDef: "brings about" },
+    "creating": { tr: "oluşturarak", enDef: "bringing about" },
+    "created": { tr: "oluşturulmuş", enDef: "produced" },
+    "allow": { tr: "izin vermek, olanak sağlamak", enDef: "give the necessary opportunity for" },
+    "allows": { tr: "olanak sağlar", enDef: "enables" },
+    "allowing": { tr: "olanak tanıyarak", enDef: "permitting" },
+    "allowed": { tr: "izin verilen", enDef: "permitted" },
+    "enable": { tr: "olanak tanımak, mümkün kılmak", enDef: "give the authority or means to do something" },
+    "enables": { tr: "mümkün kılar", enDef: "makes possible" },
+    "enabling": { tr: "olanak sağlayarak", enDef: "making possible" },
+    "enabled": { tr: "etkinleştirilmiş, olanak tanınmış", enDef: "made possible" },
+    "improve": { tr: "iyileştirmek, geliştirmek", enDef: "make or become better" },
+    "improves": { tr: "iyileştirir", enDef: "enhances" },
+    "improving": { tr: "iyileşerek", enDef: "getting better" },
+    "improved": { tr: "iyileştirilmiş", enDef: "made better" },
+    "increase": { tr: "artmak, artırmak", enDef: "become or make greater in size or amount" },
+    "increases": { tr: "artırır", enDef: "makes greater" },
+    "increasing": { tr: "artan, artış gösteren", enDef: "growing" },
+    "increased": { tr: "artmış", enDef: "elevated" },
+    "reduce": { tr: "azaltmak, düşürmek", enDef: "make smaller or less in amount or degree" },
+    "reduces": { tr: "azaltır", enDef: "lessens" },
+    "reducing": { tr: "azaltarak", enDef: "lessening" },
+    "reduced": { tr: "azaltılmış", enDef: "diminished" },
+    "maintain": { tr: "sürdürmek, korumak", enDef: "cause or enable a state to continue" },
+    "maintains": { tr: "sürdürür", enDef: "keeps up" },
+    "maintaining": { tr: "sürdürerek", enDef: "keeping in existence" },
+    "maintained": { tr: "korunan, sürdürülen", enDef: "kept in existence" },
+    "indicate": { tr: "belirtmek, göstermek", enDef: "point out; show" },
+    "indicates": { tr: "gösterir, işaret eder", enDef: "shows" },
+    "suggest": { tr: "önermek, ileri sürmek, göstermek", enDef: "put forward for consideration" },
+    "suggests": { tr: "ileri sürer, gösterir", enDef: "proposes" },
+    "consider": { tr: "düşünmek, hesaba katmak", enDef: "think carefully about" },
+    "considers": { tr: "göz önüne alır", enDef: "thinks about" },
+    "remain": { tr: "kalmak, varlığını korumak", enDef: "continue to exist" },
+    "remains": { tr: "kalır, sürdürür", enDef: "stays" },
+
+    // Reading Passage & Academic Core Nouns
+    "institution": { tr: "kurum, kuruluş", enDef: "an organization founded for an educational or social purpose" },
+    "institutions": { tr: "kurumlar, kuruluşlar", enDef: "established organizations" },
+    "scholar": { tr: "akademisyen, bilgin", enDef: "a specialist in a particular branch of study" },
+    "scholars": { tr: "akademisyenler, araştırmacılar", enDef: "learned academics" },
+    "society": { tr: "toplum", enDef: "people living together in a community" },
+    "societies": { tr: "toplumlar", enDef: "groups of communities" },
+    "societal": { tr: "toplumsal", enDef: "relating to society or social relations" },
+    "stability": { tr: "istikrar, denge", enDef: "the state of being stable" },
+    "system": { tr: "sistem, düzen", enDef: "a set of things working together" },
+    "systems": { tr: "sistemler", enDef: "interconnected mechanisms" },
+    "tool": { tr: "araç, gereç", enDef: "a device or implement used to carry out a function" },
+    "tools": { tr: "araçlar, gereçler", enDef: "instruments or mechanisms" },
+    "workflow": { tr: "iş akışı", enDef: "the sequence of processes in work" },
+    "workflows": { tr: "iş akışları", enDef: "sequences of tasks" },
+    "program": { tr: "program, plan", enDef: "a planned series of future events or activities" },
+    "programs": { tr: "programlar", enDef: "planned initiatives" },
+    "citizen": { tr: "vatandaş, yurttaş", enDef: "a recognized subject or national of a state" },
+    "citizens": { tr: "vatandaşlar", enDef: "inhabitants of a state" },
+    "method": { tr: "yöntem, metot", enDef: "a particular procedure for accomplishing something" },
+    "methods": { tr: "yöntemler", enDef: "systematic approaches" },
+    "habit": { tr: "alışkanlık", enDef: "a regular tendency or practice" },
+    "habits": { tr: "alışkanlıklar", enDef: "regular routines" },
+    "progress": { tr: "ilerleme, gelişim", enDef: "forward movement toward improvement" },
+    "respect": { tr: "saygı", enDef: "a feeling of deep admiration or consideration" },
+    "prosperity": { tr: "refah, zenginlik", enDef: "the state of flourishing, thriving, or well-being" },
+    "degradation": { tr: "bozulma, gerileme, aşınma", enDef: "the process in which quality is degraded" },
+    "efficiency": { tr: "verimlilik, etkililik", enDef: "the state of achieving maximum productivity" },
+    "community": { tr: "topluluk", enDef: "a group of people having a characteristic in common" },
+    "communities": { tr: "topluluklar", enDef: "social groups" },
+    "education": { tr: "eğitim", enDef: "systematic instruction or learning" },
+    "environment": { tr: "çevre, ortam", enDef: "the surroundings in which organisms operate" },
+    "technology": { tr: "teknoloji", enDef: "application of scientific knowledge" },
+    "research": { tr: "araştırma", enDef: "systematic investigation of materials and sources" },
+    "policy": { tr: "politika, ilke", enDef: "a course of action adopted by a government or organization" },
+    "policies": { tr: "politikalar", enDef: "courses of action" },
+    "evidence": { tr: "kanıt, delil", enDef: "facts indicating whether a belief is true" },
+    "data": { tr: "veri, bilgiler", enDef: "facts and statistics for analysis" },
+    "analysis": { tr: "analiz, çözümleme", enDef: "detailed examination of elements" },
+    "process": { tr: "süreç, işlem", enDef: "a series of actions taken to achieve an end" },
+    "challenge": { tr: "zorluk, meydan okuma", enDef: "a demanding task or problem" },
+    "resource": { tr: "kaynak", enDef: "a supply of materials, money, or assets" },
+    "resources": { tr: "kaynaklar", enDef: "supplies of assets or materials" },
+    "impact": { tr: "etki, tesir", enDef: "a marked effect or influence" },
+    "trend": { tr: "eğilim, akım", enDef: "a general direction of development" },
+    "issue": { tr: "sorun, mesele", enDef: "an important topic or problem" },
+    "culture": { tr: "kültür", enDef: "customs and social behavior of a society" },
+    "economy": { tr: "ekonomi", enDef: "wealth and resources of a region" },
+    "future": { tr: "gelecek", enDef: "the time that is to come" },
+
+    // Core Adjectives & Adverbs
+    "modern": { tr: "modern, çağdaş", enDef: "relating to the present or recent times" },
+    "global": { tr: "küresel, evrensel", enDef: "relating to the whole world; worldwide" },
+    "sustainable": { tr: "sürdürülebilir", enDef: "able to be maintained at a steady rate without depleting resources" },
+    "critical": { tr: "kritik, çok önemli, hayati", enDef: "of the greatest importance to the outcome" },
+    "severe": { tr: "şiddetli, ağır, sert", enDef: "very great, intense, or strict" },
+    "technological": { tr: "teknolojik", enDef: "relating to or using technology" },
+    "traditional": { tr: "geleneksel", enDef: "existing in or as part of a tradition" },
+    "daily": { tr: "günlük", enDef: "done, produced, or occurring every day" },
+    "ultimately": { tr: "nihayetinde, sonuç olarak", enDef: "finally, in the end" },
+    "innovative": { tr: "yenilikçi, inovatif", enDef: "featuring new methods; advanced and original" },
+    "deep": { tr: "derin, esaslı", enDef: "profound or extensive" },
+    "lasting": { tr: "kalıcı, uzun ömürlü", enDef: "enduring or continuing for a long time" },
+    "furthermore": { tr: "dahası, ayrıca, üstelik", enDef: "in addition; moreover" },
+    "consequently": { tr: "sonuç olarak, bu nedenle", enDef: "as a result" },
+    "significant": { tr: "önemli, kayda değer", enDef: "sufficiently great or important to be worthy of attention" },
+    "essential": { tr: "gerekli, elzem, temel", enDef: "absolutely necessary; extremely important" },
+    "crucial": { tr: "hayati, can alıcı, çok önemli", enDef: "decisive or critical" },
+    "effective": { tr: "etkili, verimli", enDef: "successful in producing an intended result" },
+    "potential": { tr: "potansiyel, olası", enDef: "having the capacity to develop in the future" },
+    "primary": { tr: "birincil, temel, ana", enDef: "of chief importance; principal" },
+    "complex": { tr: "karmaşık", enDef: "consisting of many connected parts" },
+    "diverse": { tr: "çeşitli, farklı", enDef: "showing a great deal of variety" },
+    "academic": { tr: "akademik", enDef: "relating to education and scholarship" },
+    "scientific": { tr: "bilimsel", enDef: "based on the principles of science" },
+    "digital": { tr: "dijital, sayısal", enDef: "involving computer technology" },
+    "economic": { tr: "ekonomik", enDef: "relating to economics or the economy" },
+    "environmental": { tr: "çevresel", enDef: "relating to the natural world" },
+    "social": { tr: "sosyal, toplumsal", enDef: "relating to society or its organization" },
+    "however": { tr: "ancak, oysa, yine de", enDef: "introducing a contrasting statement" },
+    "therefore": { tr: "bu sebeple, dolayısıyla", enDef: "for that reason; consequently" },
+    "moreover": { tr: "ayrıca, bundan başka", enDef: "as a further matter; besides" },
+    "nevertheless": { tr: "yine de, buna rağmen", enDef: "in spite of that" },
+    "meanwhile": { tr: "bu sırada, bu esnada", enDef: "in the intervening period of time" },
+
+    // Connectors & Grammar Words
+    "how": { tr: "nasıl", enDef: "in what way or by what method" },
+    "and": { tr: "ve", enDef: "used to connect words or clauses" },
+    "that": { tr: "şu, o, -ki, olduğunu", enDef: "used to identify a specific thing or clause" },
+    "if": { tr: "eğer, şayet", enDef: "introducing a conditional clause" },
+    "to": { tr: "-e, -a, mek/mak için", enDef: "infinitive marker or preposition of direction" },
+    "might": { tr: "olabilir, -ebilirdi (ihtimal)", enDef: "expressing possibility" },
+    "can": { tr: "-ebilir, yeteneği olmak", enDef: "able to" },
+    "in": { tr: "içinde, -de/-da", enDef: "preposition indicating location or enclosure" },
+    "their": { tr: "onların", enDef: "belonging to people previously mentioned" },
+    "with": { tr: "ile, beraber", enDef: "accompanied by" },
+    "for": { tr: "için, amacıyla", enDef: "with the purpose of" },
+    "will": { tr: "-ecek, -acak (gelecek zaman)", enDef: "expressing future intention or certainty" }
+  };
+
+  // Asynchronous API Fetcher for unknown words (Free Dictionary & MyMemory API)
+  async function fetchOnlineTranslation(word, titleEl, meaningEl, defEl) {
+    if (wordTranslationCache[word]) {
+      const cached = wordTranslationCache[word];
+      meaningEl.textContent = cached.tr;
+      defEl.textContent = cached.enDef || 'İngilizce - Türkçe Karşılık';
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|tr`);
+      if (!res.ok) throw new Error('API network response error');
+      const data = await res.json();
+      if (data && data.responseData && data.responseData.translatedText) {
+        let trText = data.responseData.translatedText.trim();
+        if (trText.toLowerCase() === word.toLowerCase()) {
+          trText = 'Akademik İngilizce kelime';
+        }
+        wordTranslationCache[word] = { tr: trText, enDef: 'Çevrimiçi Sözlük Çevirisi' };
+        try { localStorage.setItem('ielts_word_cache', JSON.stringify(wordTranslationCache)); } catch(e){}
+
+        if (titleEl && titleEl.getAttribute('data-active-word') === word) {
+          meaningEl.textContent = trText;
+          defEl.textContent = 'Çevrimiçi Sözlük Çevirisi';
+        }
+        return;
+      }
+    } catch (e) {
+      // Fallback: Free Dictionary API for English definition
+      try {
+        const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (dictRes.ok) {
+          const dictData = await dictRes.json();
+          if (Array.isArray(dictData) && dictData[0] && dictData[0].meanings && dictData[0].meanings[0]) {
+            const firstMeaning = dictData[0].meanings[0];
+            const defText = firstMeaning.definitions[0]?.definition || 'İngilizce Tanım';
+            const pos = firstMeaning.partOfSpeech || 'kelime';
+            const result = { tr: `(${pos}) terim`, enDef: defText };
+            wordTranslationCache[word] = result;
+            try { localStorage.setItem('ielts_word_cache', JSON.stringify(wordTranslationCache)); } catch(err){}
+            if (titleEl && titleEl.getAttribute('data-active-word') === word) {
+              meaningEl.textContent = result.tr;
+              defEl.textContent = result.enDef;
+            }
+            return;
+          }
+        }
+      } catch (err) {}
+    }
+
+    if (titleEl && titleEl.getAttribute('data-active-word') === word) {
+      meaningEl.textContent = 'Akademik Metin Kelimesi';
+      defEl.textContent = 'Telaffuz için hoparlöre tıklayın';
+    }
+  }
+
   // --- STATE MANAGEMENT ---
   const state = {
     currentTab: 'daily',
@@ -593,6 +858,39 @@ document.addEventListener('DOMContentLoaded', () => {
           }).join(' ')}
         </div>
 
+        <!-- Sentence Translation Feature (Fix #2) -->
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <button id="toggle-full-translation-btn" class="px-4 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition flex items-center gap-2 border border-indigo-200/70 dark:border-slate-600 shadow-xs cursor-pointer">
+            <i class="fas fa-language text-base text-indigo-600 dark:text-indigo-400"></i>
+            <span>🇹🇷 Tüm Çeviriyi Göster / Gizle</span>
+          </button>
+          <span class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <i class="fas fa-info-circle text-indigo-500"></i> Cümleye tıklayarak Türkçe çevirisini açıp kapatabilirsiniz
+          </span>
+        </div>
+
+        <!-- Full Translation Collapsible Box -->
+        <div id="full-translation-box" class="hidden mt-4 p-4 rounded-xl bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-slate-900/90 dark:via-slate-900/80 dark:to-slate-900/90 border border-indigo-200/80 dark:border-slate-700 space-y-3 animate-fade-in shadow-xs">
+          <div class="text-xs font-bold text-indigo-800 dark:text-indigo-300 flex items-center justify-between pb-2 border-b border-indigo-100 dark:border-slate-800">
+            <span class="flex items-center gap-2"><i class="fas fa-file-alt text-indigo-600 dark:text-indigo-400"></i> Paragrafın Türkçe Tam Çevirisi (Cümle Cümle)</span>
+            <span class="text-[11px] font-normal text-slate-400">Toplam ${dayData.reading.sentences.length} Cümle</span>
+          </div>
+          ${dayData.reading.sentences.map((sent, idx) => `
+            <div class="p-3 rounded-xl bg-white/90 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/80 space-y-1">
+              <div class="flex items-start justify-between gap-2">
+                <div class="text-xs font-bold text-slate-800 dark:text-slate-200"><span class="text-indigo-600 mr-1">${idx + 1}.</span>${sent.en}</div>
+                <button class="speak-btn text-slate-400 hover:text-indigo-600 p-1 flex-shrink-0" data-speak="${encodeURIComponent(sent.en)}" title="Dinle"><i class="fas fa-volume-up text-xs"></i></button>
+              </div>
+              <div class="text-xs font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-950/40 p-2 rounded-lg">
+                🇹🇷 ${sent.tr}
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 italic pl-1">
+                ${sent.analysis}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
         <div id="sentence-analysis-card" class="${state.activeSentenceId ? '' : 'hidden'} mt-5 p-4 rounded-xl bg-indigo-50/90 dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900 animate-fade-in"></div>
 
         <div id="word-popup" class="hidden absolute z-50 p-3.5 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700 min-w-[200px] max-w-[280px] animate-fade-in">
@@ -713,6 +1011,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Toggle full sentence translations (Fix #2)
+    const toggleTranslationBtn = container.querySelector('#toggle-full-translation-btn');
+    const fullTranslationBox = container.querySelector('#full-translation-box');
+    if (toggleTranslationBtn && fullTranslationBox) {
+      toggleTranslationBtn.addEventListener('click', () => {
+        fullTranslationBox.classList.toggle('hidden');
+        const isHidden = fullTranslationBox.classList.contains('hidden');
+        toggleTranslationBtn.innerHTML = isHidden 
+          ? '<i class="fas fa-language text-base text-indigo-600 dark:text-indigo-400"></i> <span>🇹🇷 Tüm Çeviriyi Göster / Gizle</span>'
+          : '<i class="fas fa-times text-base text-rose-500"></i> <span>🇹🇷 Çeviriyi Gizle</span>';
+      });
+    }
+
     // Checkpoint specific events
     if (dayData.isCheckpoint) {
       const cpSpeechBtn = container.querySelector('#checkpoint-speech-btn');
@@ -775,13 +1086,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showWordPopup(rawWord, targetElement, dayData, popup) {
     if (!popup) return;
-    const targetVocab = (dayData.words || []).find(w => w.word.toLowerCase() === rawWord.toLowerCase());
-    const dictMeaning = (dayData.reading && dayData.reading.wordDictionary) ? dayData.reading.wordDictionary[rawWord.toLowerCase()] : null;
+    const cleanWord = (rawWord || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (!cleanWord) return;
 
     const titleEl = popup.querySelector('#word-popup-title');
     const meaningEl = popup.querySelector('#word-popup-meaning');
     const defEl = popup.querySelector('#word-popup-def');
     const speakBtn = popup.querySelector('#word-popup-speak');
+
+    titleEl.setAttribute('data-active-word', cleanWord);
+
+    // 1. Direct target vocabulary in today's lesson
+    const targetVocab = (dayData.words || []).find(w => w.word.toLowerCase() === cleanWord);
+    
+    // 2. Reading specific dictionary
+    const dictMeaning = (dayData.reading && dayData.reading.wordDictionary) 
+      ? (dayData.reading.wordDictionary[cleanWord] || dayData.reading.wordDictionary[rawWord.toLowerCase()]) 
+      : null;
+
+    // 3. Cache
+    const cached = wordTranslationCache[cleanWord];
+
+    // 4. Builtin common dictionary or global academic vocabulary pool
+    const poolWord = (window.ACADEMIC_VOCABULARY_POOL || []).find(w => w.word.toLowerCase() === cleanWord);
+    const builtinWord = BUILTIN_COMMON_DICTIONARY[cleanWord];
+
+    // Helper to find root / lemma if ending with s, es, ed, ing, ly
+    let lemmaWord = null;
+    if (!targetVocab && !dictMeaning && !cached && !poolWord && !builtinWord) {
+      const candidates = [];
+      if (cleanWord.endsWith('ies')) candidates.push(cleanWord.slice(0, -3) + 'y');
+      if (cleanWord.endsWith('es')) candidates.push(cleanWord.slice(0, -2));
+      if (cleanWord.endsWith('s')) candidates.push(cleanWord.slice(0, -1));
+      if (cleanWord.endsWith('ing')) {
+        candidates.push(cleanWord.slice(0, -3));
+        candidates.push(cleanWord.slice(0, -3) + 'e');
+      }
+      if (cleanWord.endsWith('ed')) {
+        candidates.push(cleanWord.slice(0, -2));
+        candidates.push(cleanWord.slice(0, -1));
+      }
+      if (cleanWord.endsWith('ly')) candidates.push(cleanWord.slice(0, -2));
+
+      for (const cand of candidates) {
+        const pMatch = (window.ACADEMIC_VOCABULARY_POOL || []).find(w => w.word.toLowerCase() === cand);
+        const bMatch = BUILTIN_COMMON_DICTIONARY[cand];
+        if (pMatch) {
+          lemmaWord = { word: cand, tr: pMatch.tr, enDef: pMatch.enDef };
+          break;
+        }
+        if (bMatch) {
+          lemmaWord = { word: cand, tr: bMatch.tr, enDef: bMatch.enDef };
+          break;
+        }
+      }
+    }
 
     if (targetVocab) {
       titleEl.textContent = `${targetVocab.word} (${targetVocab.type})`;
@@ -789,27 +1148,61 @@ document.addEventListener('DOMContentLoaded', () => {
       defEl.textContent = targetVocab.enDef;
       speakBtn.onclick = () => speak(targetVocab.word);
     } else if (dictMeaning) {
-      titleEl.textContent = rawWord;
+      titleEl.textContent = cleanWord;
       meaningEl.textContent = dictMeaning;
       defEl.textContent = 'Paragraftaki akademik kelime';
-      speakBtn.onclick = () => speak(rawWord);
+      speakBtn.onclick = () => speak(cleanWord);
+    } else if (cached) {
+      titleEl.textContent = cleanWord;
+      meaningEl.textContent = cached.tr;
+      defEl.textContent = cached.enDef || 'İngilizce - Türkçe Sözlük';
+      speakBtn.onclick = () => speak(cleanWord);
+    } else if (poolWord) {
+      titleEl.textContent = `${poolWord.word} (${poolWord.type})`;
+      meaningEl.textContent = poolWord.tr;
+      defEl.textContent = poolWord.enDef;
+      speakBtn.onclick = () => speak(poolWord.word);
+    } else if (builtinWord) {
+      titleEl.textContent = cleanWord;
+      meaningEl.textContent = builtinWord.tr;
+      defEl.textContent = builtinWord.enDef;
+      speakBtn.onclick = () => speak(cleanWord);
+    } else if (lemmaWord) {
+      titleEl.textContent = `${cleanWord} (Kök: ${lemmaWord.word})`;
+      meaningEl.textContent = lemmaWord.tr;
+      defEl.textContent = lemmaWord.enDef;
+      speakBtn.onclick = () => speak(cleanWord);
     } else {
-      titleEl.textContent = rawWord;
-      meaningEl.textContent = 'İngilizce kelime';
-      defEl.textContent = 'Telaffuz için hoparlöre tıklayın';
-      speakBtn.onclick = () => speak(rawWord);
+      // Show loading and fetch online translation asynchronously (Fix #1)
+      titleEl.textContent = cleanWord;
+      meaningEl.textContent = 'Çevriliyor... ⏳';
+      defEl.textContent = 'Sözlükten getiriliyor...';
+      speakBtn.onclick = () => speak(cleanWord);
+
+      fetchOnlineTranslation(cleanWord, titleEl, meaningEl, defEl);
     }
 
     const rect = targetElement.getBoundingClientRect();
-    const parentRect = targetElement.closest('.relative').getBoundingClientRect();
+    const parent = targetElement.closest('.relative') || document.body;
+    const parentRect = parent.getBoundingClientRect();
     popup.style.top = `${rect.bottom - parentRect.top + 8}px`;
-    popup.style.left = `${Math.min(rect.left - parentRect.left, parentRect.width - 240)}px`;
+    popup.style.left = `${Math.min(Math.max(10, rect.left - parentRect.left), parentRect.width - 260)}px`;
     popup.classList.remove('hidden');
 
-    speak(rawWord, 0.95);
+    speak(cleanWord, 0.95);
   }
 
   function selectSentence(sentenceId, dayData, container) {
+    const card = container.querySelector('#sentence-analysis-card');
+
+    // Toggle off if clicking the already active sentence (Fix #2)
+    if (state.activeSentenceId === sentenceId) {
+      state.activeSentenceId = null;
+      container.querySelectorAll('.interactive-sentence').forEach(el => el.classList.remove('active-sentence'));
+      if (card) card.classList.add('hidden');
+      return;
+    }
+
     state.activeSentenceId = sentenceId;
     const sent = (dayData.reading && dayData.reading.sentences) ? dayData.reading.sentences.find(s => s.id === sentenceId) : null;
     if (!sent) return;
@@ -822,22 +1215,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const card = container.querySelector('#sentence-analysis-card');
     if (card) {
       card.innerHTML = `
         <div class="flex items-start justify-between gap-3 mb-2">
           <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
               <i class="fas fa-language"></i>
             </span>
             <span class="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Cümlenin Türkçe Çevirisi</span>
           </div>
-          <button class="speak-btn text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 p-1" data-speak="${encodeURIComponent(sent.en)}">
-            <i class="fas fa-volume-up"></i>
-          </button>
+          <div class="flex items-center gap-2">
+            <button class="speak-btn text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 p-1 cursor-pointer" data-speak="${encodeURIComponent(sent.en)}" title="Cümleyi Dinle">
+              <i class="fas fa-volume-up"></i>
+            </button>
+            <button id="close-sentence-card-btn" class="text-slate-400 hover:text-rose-500 p-1 cursor-pointer" title="Kapat">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
         </div>
-        <div class="text-sm font-semibold text-slate-900 dark:text-white mb-2 leading-relaxed">
-          "${sent.tr}"
+        <div class="p-3 rounded-xl bg-indigo-100/70 dark:bg-indigo-950/50 text-sm font-bold text-indigo-950 dark:text-indigo-100 mb-2 leading-relaxed border border-indigo-200 dark:border-indigo-900/60">
+          🇹🇷 "${sent.tr}"
         </div>
         <div class="p-2.5 rounded-lg bg-white/80 dark:bg-slate-800 border border-indigo-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
           <strong class="text-indigo-700 dark:text-indigo-300">Gramer & Yapı:</strong> ${sent.analysis}
@@ -845,6 +1242,14 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       card.classList.remove('hidden');
       card.querySelector('.speak-btn').addEventListener('click', () => speak(sent.en));
+      const closeBtn = card.querySelector('#close-sentence-card-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          state.activeSentenceId = null;
+          container.querySelectorAll('.interactive-sentence').forEach(el => el.classList.remove('active-sentence'));
+          card.classList.add('hidden');
+        });
+      }
     }
   }
 
@@ -1086,7 +1491,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleMatchingClick(cardEl, container, totalPairs) {
     const cardId = cardEl.getAttribute('data-card-id');
     const cardObj = state.matchingCards.find(c => c.id === cardId);
-    if (!cardObj || cardObj.matched || cardEl.classList.contains('selected')) return;
+    if (!cardObj || cardObj.matched) return;
+
+    // Fix #5: If clicked card is already the first selected card, cancel selection
+    if (state.firstSelectedCard && state.firstSelectedCard.el === cardEl) {
+      cardEl.classList.remove('selected');
+      state.firstSelectedCard = null;
+      return;
+    }
+
+    if (cardEl.classList.contains('selected')) return;
 
     if (!state.firstSelectedCard) {
       state.firstSelectedCard = { el: cardEl, data: cardObj };
@@ -1374,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1100);
   }
 
-  // --- SUB-VIEW 4: WORDS LIST WITH SRS BADGES ---
+  // --- SUB-VIEW 4: WORDS LIST WITH SRS BADGES (FIX #4 FOCUS PRESERVED) ---
   function renderWordsList(container, filteredWords, allWords) {
     container.innerHTML = `
       <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -1384,69 +1798,110 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="bank-search-input" value="${state.bankSearch}" placeholder="Kelime veya Türkçe anlam ara..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm dark:text-white">
           </div>
 
-          <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
-            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}" data-filter="all">Tümü (${allWords.length})</button>
-            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'due' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}" data-filter="due">Tekrarı Gelenler</button>
-            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'struggling' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}" data-filter="struggling">Zorlanılanlar</button>
-            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'mastered' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}" data-filter="mastered">Ustalaşılanlar</button>
-            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'favorites' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}" data-filter="favorites">Favoriler</button>
+          <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto" id="bank-filter-group">
+            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" data-filter="all">Tümü (${allWords.length})</button>
+            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'due' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" data-filter="due">Tekrarı Gelenler</button>
+            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'struggling' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" data-filter="struggling">Zorlanılanlar</button>
+            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'mastered' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" data-filter="mastered">Ustalaşılanlar</button>
+            <button class="bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${state.bankFilter === 'favorites' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" data-filter="favorites">Favoriler</button>
           </div>
         </div>
 
-        <div class="space-y-3">
-          ${filteredWords.map(w => {
-            const sr = getWordSRInfo(w.id);
-            const isFav = state.favoriteWords.includes(w.id);
-            return `
-              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-start gap-3">
-                  <button class="fav-toggle-btn text-base ${isFav ? 'text-amber-500' : 'text-slate-300'}" data-word-id="${w.id}">
-                    <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
-                  </button>
-                  <div>
-                    <div class="flex items-baseline gap-2 flex-wrap">
-                      <span class="font-bold text-base text-slate-900 dark:text-white">${w.word}</span>
-                      <span class="text-xs text-slate-400 font-mono">${w.phonetic}</span>
-                      <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-600">${w.type}</span>
-                      <span class="text-[11px] px-2 py-0.5 rounded-full font-bold sr-badge-${sr.level}">SRS Lv.${sr.level}</span>
-                      ${sr.wrongCount > 0 ? `<span class="text-[10px] text-rose-500 font-bold">Hata: ${sr.wrongCount}</span>` : ''}
-                    </div>
-                    <div class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">${w.tr}</div>
-                    <div class="text-xs text-slate-500 italic mt-0.5">"${w.example}"</div>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-2 self-end sm:self-center">
-                  <button class="speak-btn p-2 rounded-lg text-slate-400 hover:text-indigo-600 transition" data-speak="${w.word}">
-                    <i class="fas fa-volume-up"></i>
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
+        <div id="bank-words-container" class="space-y-3"></div>
       </div>
     `;
 
-    container.querySelector('#bank-search-input').addEventListener('input', (e) => {
+    const wordsContainer = container.querySelector('#bank-words-container');
+    const searchInput = container.querySelector('#bank-search-input');
+    const filterBtns = container.querySelectorAll('.bank-filter-btn');
+
+    function getFilteredWordsList() {
+      const now = Date.now();
+      const q = state.bankSearch.toLowerCase().trim();
+      return allWords.filter(w => {
+        const sr = getWordSRInfo(w.id);
+        const matchesSearch = !q || w.word.toLowerCase().includes(q) || w.tr.toLowerCase().includes(q);
+        if (!matchesSearch) return false;
+
+        if (state.bankFilter === 'due') return sr.nextReview <= now || sr.level === 1;
+        if (state.bankFilter === 'struggling') return sr.wrongCount >= 1;
+        if (state.bankFilter === 'mastered') return sr.level >= 4;
+        if (state.bankFilter === 'favorites') return state.favoriteWords.includes(w.id);
+        return true;
+      });
+    }
+
+    function updateWordsListDom() {
+      const words = getFilteredWordsList();
+      if (words.length === 0) {
+        wordsContainer.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl">Aramaya veya filtreye uygun kelime bulunamadı.</div>`;
+        return;
+      }
+
+      wordsContainer.innerHTML = words.map(w => {
+        const sr = getWordSRInfo(w.id);
+        const isFav = state.favoriteWords.includes(w.id);
+        return `
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <button class="fav-toggle-btn text-base ${isFav ? 'text-amber-500' : 'text-slate-300 hover:text-amber-500'}" data-word-id="${w.id}">
+                <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
+              </button>
+              <div>
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="font-bold text-base text-slate-900 dark:text-white">${w.word}</span>
+                  <span class="text-xs text-slate-400 font-mono">${w.phonetic}</span>
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${w.type}</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-bold sr-badge-${sr.level}">SRS Lv.${sr.level}</span>
+                  ${sr.wrongCount > 0 ? `<span class="text-[10px] text-rose-500 font-bold">Hata: ${sr.wrongCount}</span>` : ''}
+                </div>
+                <div class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">${w.tr}</div>
+                <div class="text-xs text-slate-500 italic mt-0.5">"${w.example}"</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <button class="speak-btn p-2 rounded-lg text-slate-400 hover:text-indigo-600 transition" data-speak="${w.word}">
+                <i class="fas fa-volume-up"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      wordsContainer.querySelectorAll('.speak-btn').forEach(btn => {
+        btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
+      });
+      wordsContainer.querySelectorAll('.fav-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          toggleFavoriteWord(btn.getAttribute('data-word-id'));
+          updateWordsListDom();
+        });
+      });
+    }
+
+    searchInput.addEventListener('input', (e) => {
       state.bankSearch = e.target.value;
-      renderVocabularyBank(document.getElementById('main-content-area'));
+      updateWordsListDom();
     });
-    container.querySelectorAll('.bank-filter-btn').forEach(btn => {
+
+    filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         state.bankFilter = btn.getAttribute('data-filter');
-        renderVocabularyBank(document.getElementById('main-content-area'));
+        filterBtns.forEach(b => {
+          const filter = b.getAttribute('data-filter');
+          if (filter === state.bankFilter) {
+            const activeColor = filter === 'due' ? 'bg-rose-600 text-white' : (filter === 'struggling' ? 'bg-amber-600 text-white' : (filter === 'mastered' ? 'bg-emerald-600 text-white' : (filter === 'favorites' ? 'bg-amber-600 text-white' : 'bg-indigo-600 text-white')));
+            b.className = `bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${activeColor}`;
+          } else {
+            b.className = `bank-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300`;
+          }
+        });
+        updateWordsListDom();
       });
     });
-    container.querySelectorAll('.speak-btn').forEach(btn => {
-      btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
-    });
-    container.querySelectorAll('.fav-toggle-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        toggleFavoriteWord(btn.getAttribute('data-word-id'));
-        renderVocabularyBank(document.getElementById('main-content-area'));
-      });
-    });
+
+    updateWordsListDom();
   }
 
   // =========================================================================
@@ -1694,14 +2149,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 5. IRREGULAR VERBS & GAME
+  // 5. IRREGULAR VERBS & GAME (FIX #3 & FIX #4)
   // =========================================================================
   function renderIrregularVerbs(container) {
     const data = window.IRREGULAR_VERBS_DATA;
     let filteredVerbs = data.verbs.filter(v => {
-      const q = state.irregularSearch.toLowerCase();
-      return v.v1.toLowerCase().includes(q) || v.v2.toLowerCase().includes(q) || v.v3.toLowerCase().includes(q) || v.tr.toLowerCase().includes(q);
+      const q = state.irregularSearch.toLowerCase().trim();
+      return !q || v.v1.toLowerCase().includes(q) || v.v2.toLowerCase().includes(q) || v.v3.toLowerCase().includes(q) || v.tr.toLowerCase().includes(q);
     });
+
+    function renderIrregularRowsHtml(verbs) {
+      if (verbs.length === 0) {
+        return `<tr><td colspan="6" class="p-4 text-center text-slate-400">Aranan kritere uygun fiil bulunamadı.</td></tr>`;
+      }
+      return verbs.map(v => `
+        <tr>
+          <td class="p-2 font-bold text-indigo-600 dark:text-indigo-400">${v.v1}</td>
+          <td class="p-2 font-semibold text-slate-800 dark:text-slate-200">${v.v2}</td>
+          <td class="p-2 font-semibold text-slate-800 dark:text-slate-200">${v.v3}</td>
+          <td class="p-2 text-slate-700 dark:text-slate-300 font-medium">${v.tr}</td>
+          <td class="p-2 text-slate-400 italic">"${v.example}"</td>
+          <td class="p-2"><button class="speak-btn text-slate-400 hover:text-indigo-600 cursor-pointer" data-speak="${v.v1}, ${v.v2}, ${v.v3}"><i class="fas fa-volume-up"></i></button></td>
+        </tr>
+      `).join('');
+    }
 
     container.innerHTML = `
       <div class="space-y-8 animate-fade-in pb-16">
@@ -1709,10 +2180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="p-6 rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 dark:from-slate-800 dark:via-slate-800 dark:to-indigo-950/30 border border-indigo-100 dark:border-slate-700 shadow-sm">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <span class="text-xs font-bold text-indigo-600 uppercase">Boşluk Doldurma Oyunu</span>
+              <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase">Boşluk Doldurma Oyunu</span>
               <h3 class="text-xl font-bold text-slate-900 dark:text-white">Doğru Düzensiz Fiil Formunu Seçin</h3>
             </div>
-            <span class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold">
+            <span id="irr-streak-badge" class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-bold">
               🔥 Seri: ${state.irregularStreak}
             </span>
           </div>
@@ -1722,25 +2193,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <!-- Table -->
         <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Düzensiz Fiiller Kütüphanesi (${filteredVerbs.length})</h3>
-            <input type="text" id="irr-search-input" value="${state.irregularSearch}" placeholder="Fiil veya anlam ara..." class="w-full sm:w-64 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 text-xs">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Düzensiz Fiiller Kütüphanesi <span id="irr-count">(${filteredVerbs.length})</span></h3>
+            <input type="text" id="irr-search-input" value="${state.irregularSearch}" placeholder="Fiil veya anlam ara..." class="w-full sm:w-64 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs dark:text-white focus:ring-2 focus:ring-indigo-500">
           </div>
           <div class="overflow-x-auto max-h-96">
             <table class="w-full text-left text-xs">
               <thead class="border-b border-slate-200 dark:border-slate-700 text-slate-400">
                 <tr><th class="p-2">V1</th><th class="p-2">V2</th><th class="p-2">V3</th><th class="p-2">Anlamı</th><th class="p-2">Örnek</th><th class="p-2">Ses</th></tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                ${filteredVerbs.map(v => `
-                  <tr>
-                    <td class="p-2 font-bold text-indigo-600">${v.v1}</td>
-                    <td class="p-2 font-semibold">${v.v2}</td>
-                    <td class="p-2 font-semibold">${v.v3}</td>
-                    <td class="p-2">${v.tr}</td>
-                    <td class="p-2 text-slate-400 italic">"${v.example}"</td>
-                    <td class="p-2"><button class="speak-btn text-slate-400 hover:text-indigo-600" data-speak="${v.v1}, ${v.v2}, ${v.v3}"><i class="fas fa-volume-up"></i></button></td>
-                  </tr>
-                `).join('')}
+              <tbody id="irr-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                ${renderIrregularRowsHtml(filteredVerbs)}
               </tbody>
             </table>
           </div>
@@ -1748,29 +2210,41 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
+    function bindTbodySpeak() {
+      container.querySelectorAll('#irr-tbody .speak-btn').forEach(btn => {
+        btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
+      });
+    }
+
+    // Fix #4: Only update table rows on search input, keeping input focused
     container.querySelector('#irr-search-input').addEventListener('input', (e) => {
       state.irregularSearch = e.target.value;
-      renderIrregularVerbs(container);
-    });
-    container.querySelectorAll('.speak-btn').forEach(btn => {
-      btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
+      const q = state.irregularSearch.toLowerCase().trim();
+      const matched = data.verbs.filter(v => {
+        return !q || v.v1.toLowerCase().includes(q) || v.v2.toLowerCase().includes(q) || v.v3.toLowerCase().includes(q) || v.tr.toLowerCase().includes(q);
+      });
+      container.querySelector('#irr-count').textContent = `(${matched.length})`;
+      container.querySelector('#irr-tbody').innerHTML = renderIrregularRowsHtml(matched);
+      bindTbodySpeak();
     });
 
+    bindTbodySpeak();
     renderIrregularQuestion(container.querySelector('#irregular-game-box'), data.gameQuestions);
   }
 
+  // Fix #3: Irregular Verbs 1-Second Visual Feedback Delay
   function renderIrregularQuestion(box, questions) {
     const q = questions[state.irregularQuizIndex % questions.length];
     if (!q) return;
 
     box.innerHTML = `
       <div>
-        <div class="text-xs text-slate-400 mb-1">İstenen Form: <strong class="uppercase text-indigo-600">${q.requiredForm}</strong> (Fiil: ${q.baseVerb})</div>
+        <div class="text-xs text-slate-400 mb-1">İstenen Form: <strong class="uppercase text-indigo-600 dark:text-indigo-400">${q.requiredForm}</strong> (Fiil: ${q.baseVerb})</div>
         <h4 class="text-base font-bold text-slate-900 dark:text-white mb-1">${q.sentence.replace('______', '<span class="text-amber-500 underline font-mono">______</span>')}</h4>
         <p class="text-xs text-slate-500 italic mb-4">${q.tr}</p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="irr-options-container">
           ${q.options.map(opt => `
-            <button class="irr-option-btn p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs" data-val="${opt}">${opt}</button>
+            <button class="irr-option-btn p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs hover:border-indigo-500 transition text-slate-800 dark:text-slate-200 cursor-pointer" data-val="${opt}">${opt}</button>
           `).join('')}
         </div>
       </div>
@@ -1778,59 +2252,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     box.querySelectorAll('.irr-option-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const isCorrect = btn.getAttribute('data-val') === q.answer;
+        const allBtns = box.querySelectorAll('.irr-option-btn');
+        // Disable all buttons to prevent multiple clicks during delay
+        allBtns.forEach(b => {
+          b.disabled = true;
+          b.style.pointerEvents = 'none';
+        });
+
+        const selectedVal = btn.getAttribute('data-val');
+        const isCorrect = selectedVal === q.answer;
+
         if (isCorrect) {
           state.irregularStreak++;
-          btn.classList.add('bg-emerald-500', 'text-white');
+          btn.className = 'irr-option-btn p-3 rounded-xl border border-green-600 bg-green-500 text-white font-bold text-xs shadow-md transition';
         } else {
           state.irregularStreak = 0;
-          btn.classList.add('bg-rose-500', 'text-white');
+          btn.className = 'irr-option-btn p-3 rounded-xl border border-red-600 bg-red-500 text-white font-bold text-xs shadow-md transition';
+
+          // Correct option also turns green so user learns the right answer
+          allBtns.forEach(b => {
+            if (b.getAttribute('data-val') === q.answer) {
+              b.className = 'irr-option-btn p-3 rounded-xl border border-green-600 bg-green-500 text-white font-bold text-xs shadow-md transition';
+            }
+          });
         }
+
+        const streakBadge = document.getElementById('irr-streak-badge');
+        if (streakBadge) {
+          streakBadge.textContent = `🔥 Seri: ${state.irregularStreak}`;
+        }
+
+        // 1-second delay (1000ms) before advancing to next question
         setTimeout(() => {
           state.irregularQuizIndex++;
           renderIrregularQuestion(box, questions);
-        }, 800);
+        }, 1000);
       });
     });
   }
 
   // =========================================================================
-  // 6. ENGLISH GRAMMAR TREE & ENCYCLOPEDIA (İNGİLİZCE KONU ANLATIMI)
+  // 6. ENGLISH GRAMMAR TREE & ENCYCLOPEDIA (FIX #4 INPUT FOCUS PRESERVED)
   // =========================================================================
   function renderStudyGuide(container) {
     const categories = window.STUDY_GUIDE_DATA.categories;
-    const query = state.guideSearch.toLowerCase().trim();
-
-    // Filter categories and topics based on search
-    const filteredCategories = categories.map(cat => {
-      const matchingTopics = cat.topics.filter(t => {
-        if (!query) return true;
-        return t.title.toLowerCase().includes(query) ||
-               t.summary.toLowerCase().includes(query) ||
-               t.formula.toLowerCase().includes(query) ||
-               t.b1Explanation.toLowerCase().includes(query);
-      });
-      return { ...cat, topics: matchingTopics };
-    }).filter(cat => cat.topics.length > 0);
-
-    // If searching, auto-expand categories that matched
-    if (query) {
-      filteredCategories.forEach(c => state.expandedCategories.add(c.id));
-    }
-
-    // Find active topic
-    let activeTopic = null;
-    for (const cat of categories) {
-      const found = cat.topics.find(t => t.id === state.activeTopicId);
-      if (found) {
-        activeTopic = found;
-        break;
-      }
-    }
-    if (!activeTopic && filteredCategories[0] && filteredCategories[0].topics[0]) {
-      activeTopic = filteredCategories[0].topics[0];
-      state.activeTopicId = activeTopic.id;
-    }
 
     container.innerHTML = `
       <div class="space-y-6 animate-fade-in pb-16">
@@ -1854,78 +2319,126 @@ document.addEventListener('DOMContentLoaded', () => {
         <!-- 2-Column Split: Tree Navigator on Left, Content on Right -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          <!-- LEFT: Branching Tree Navigator (4 cols) -->
-          <div class="lg:col-span-5 space-y-3 max-h-[700px] overflow-y-auto pr-1">
-            ${filteredCategories.map(cat => {
-              const isExpanded = state.expandedCategories.has(cat.id);
-              return `
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
-                  <div class="tree-category-header p-3.5 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40" data-cat-id="${cat.id}">
-                    <div class="flex items-center gap-2.5">
-                      <i class="fas ${cat.icon} text-indigo-600 dark:text-indigo-400 text-sm"></i>
-                      <span class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">${cat.name}</span>
-                    </div>
-                    <i class="fas ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-slate-400 text-xs transition-transform"></i>
-                  </div>
-
-                  <div class="tree-topics-container ${isExpanded ? 'block' : 'hidden'} p-2 space-y-1 bg-white dark:bg-slate-800">
-                    ${cat.topics.map(t => {
-                      const isActive = state.activeTopicId === t.id;
-                      return `
-                        <div class="tree-topic-item p-2.5 rounded-lg text-xs font-semibold transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}" data-topic-id="${t.id}">
-                          ${t.title}
-                        </div>
-                      `;
-                    }).join('')}
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
+          <!-- LEFT: Branching Tree Navigator (5 cols) -->
+          <div id="guide-tree-container" class="lg:col-span-5 space-y-3 max-h-[700px] overflow-y-auto pr-1"></div>
 
           <!-- RIGHT: Detailed Topic Content View (7 cols) -->
-          <div class="lg:col-span-7">
-            ${activeTopic ? renderTopicDetailCard(activeTopic) : `
-              <div class="p-8 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-2xl">Lütfen bir konu seçin.</div>
-            `}
-          </div>
+          <div id="guide-detail-container" class="lg:col-span-7"></div>
 
         </div>
       </div>
     `;
 
-    // Live search event
+    const treeContainer = container.querySelector('#guide-tree-container');
+    const detailContainer = container.querySelector('#guide-detail-container');
     const searchInput = container.querySelector('#grammar-search-input');
+
+    function updateGuideViews() {
+      const query = state.guideSearch.toLowerCase().trim();
+
+      // Filter categories and topics based on search
+      const filteredCategories = categories.map(cat => {
+        const matchingTopics = cat.topics.filter(t => {
+          if (!query) return true;
+          return t.title.toLowerCase().includes(query) ||
+                 t.summary.toLowerCase().includes(query) ||
+                 t.formula.toLowerCase().includes(query) ||
+                 t.b1Explanation.toLowerCase().includes(query);
+        });
+        return { ...cat, topics: matchingTopics };
+      }).filter(cat => cat.topics.length > 0);
+
+      // If searching, auto-expand categories that matched
+      if (query) {
+        filteredCategories.forEach(c => state.expandedCategories.add(c.id));
+      }
+
+      // Find active topic
+      let activeTopic = null;
+      for (const cat of categories) {
+        const found = cat.topics.find(t => t.id === state.activeTopicId);
+        if (found) {
+          activeTopic = found;
+          break;
+        }
+      }
+      if (!activeTopic && filteredCategories[0] && filteredCategories[0].topics[0]) {
+        activeTopic = filteredCategories[0].topics[0];
+        state.activeTopicId = activeTopic.id;
+      }
+
+      // Render Tree HTML
+      if (filteredCategories.length === 0) {
+        treeContainer.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">Aramanıza uygun dilbilgisi konusu bulunamadı.</div>`;
+      } else {
+        treeContainer.innerHTML = filteredCategories.map(cat => {
+          const isExpanded = state.expandedCategories.has(cat.id);
+          return `
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+              <div class="tree-category-header p-3.5 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 cursor-pointer select-none" data-cat-id="${cat.id}">
+                <div class="flex items-center gap-2.5">
+                  <i class="fas ${cat.icon} text-indigo-600 dark:text-indigo-400 text-sm"></i>
+                  <span class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200">${cat.name}</span>
+                </div>
+                <i class="fas ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-slate-400 text-xs transition-transform"></i>
+              </div>
+
+              <div class="tree-topics-container ${isExpanded ? 'block' : 'hidden'} p-2 space-y-1 bg-white dark:bg-slate-800">
+                ${cat.topics.map(t => {
+                  const isActive = state.activeTopicId === t.id;
+                  return `
+                    <div class="tree-topic-item p-2.5 rounded-lg text-xs font-semibold cursor-pointer transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}" data-topic-id="${t.id}">
+                      ${t.title}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Bind Category Toggle without re-rendering search input
+        treeContainer.querySelectorAll('.tree-category-header').forEach(header => {
+          header.addEventListener('click', () => {
+            const catId = header.getAttribute('data-cat-id');
+            if (state.expandedCategories.has(catId)) {
+              state.expandedCategories.delete(catId);
+            } else {
+              state.expandedCategories.add(catId);
+            }
+            updateGuideViews();
+          });
+        });
+
+        // Bind Topic Selection without re-rendering search input
+        treeContainer.querySelectorAll('.tree-topic-item').forEach(item => {
+          item.addEventListener('click', () => {
+            state.activeTopicId = item.getAttribute('data-topic-id');
+            updateGuideViews();
+          });
+        });
+      }
+
+      // Render Topic Detail View
+      if (activeTopic) {
+        detailContainer.innerHTML = renderTopicDetailCard(activeTopic);
+        detailContainer.querySelectorAll('.speak-btn').forEach(btn => {
+          btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
+        });
+      } else {
+        detailContainer.innerHTML = `
+          <div class="p-8 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">Lütfen bir konu seçin.</div>
+        `;
+      }
+    }
+
+    // Fix #4: Input event updates only tree and detail, preserving search input focus and mobile keyboard
     searchInput.addEventListener('input', (e) => {
       state.guideSearch = e.target.value;
-      renderStudyGuide(container);
+      updateGuideViews();
     });
 
-    // Toggle categories
-    container.querySelectorAll('.tree-category-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const catId = header.getAttribute('data-cat-id');
-        if (state.expandedCategories.has(catId)) {
-          state.expandedCategories.delete(catId);
-        } else {
-          state.expandedCategories.add(catId);
-        }
-        renderStudyGuide(container);
-      });
-    });
-
-    // Select topic
-    container.querySelectorAll('.tree-topic-item').forEach(item => {
-      item.addEventListener('click', () => {
-        state.activeTopicId = item.getAttribute('data-topic-id');
-        renderStudyGuide(container);
-      });
-    });
-
-    // Speak buttons inside detail view
-    container.querySelectorAll('.speak-btn').forEach(btn => {
-      btn.addEventListener('click', () => speak(decodeURIComponent(btn.getAttribute('data-speak'))));
-    });
+    updateGuideViews();
   }
 
   function renderTopicDetailCard(topic) {
