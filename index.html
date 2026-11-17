@@ -2,6 +2,29 @@
 <html lang="tr" class="light">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Global Cache Invalidator & Build Version Guard (v3.2.0)
+    (function() {
+      const CURRENT_BUILD = 'v3.2.0';
+      const hasVersion = window.location.search.includes('v=3.2.0');
+      if (localStorage.getItem('ielts_app_build') !== CURRENT_BUILD || !hasVersion) {
+        localStorage.setItem('ielts_app_build', CURRENT_BUILD);
+        if ('caches' in window) {
+          caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.unregister(); });
+          });
+        }
+        if (!hasVersion) {
+          window.location.replace(window.location.pathname + '?v=3.2.0&t=' + Date.now());
+        }
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ACİL İNGİLİZCE !! - Mobil & Web Çalışma Platformu</title>
   
@@ -52,7 +75,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=3.0.0">
+  <link rel="stylesheet" href="styles.css?v=3.2.0">
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col md:flex-row safe-area-padding">
 
@@ -237,12 +260,12 @@
   <!-- Toast Container -->
   <div id="toast-container" class="fixed top-16 sm:top-20 right-4 sm:right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-  <!-- Scripts (Version 3.0.0 Cache Busted) -->
-  <script src="data/curriculum.js?v=3.0.0"></script>
-  <script src="data/roots-affixes.js?v=3.0.0"></script>
-  <script src="data/irregular-verbs.js?v=3.0.0"></script>
-  <script src="data/study-guide.js?v=3.0.0"></script>
-  <script src="app.js?v=3.0.0"></script>
+  <!-- Scripts (Version 3.2.0 Cache Busted) -->
+  <script src="data/curriculum.js?v=3.2.0"></script>
+  <script src="data/roots-affixes.js?v=3.2.0"></script>
+  <script src="data/irregular-verbs.js?v=3.2.0"></script>
+  <script src="data/study-guide.js?v=3.2.0"></script>
+  <script src="app.js?v=3.2.0"></script>
 <style>
     /* Netlify Badge Yok Edici - Yeni Versiyon */
     netlify-badge,

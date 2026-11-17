@@ -335,8 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- PWA & SERVICE WORKER ---
   function initMobileAndPWA() {
-    // Force cache bust & update check for Version 3.0.0
-    const CURRENT_APP_VERSION = 'v3.0.0';
+    // Force cache bust & update check for Version 3.2.0
+    const CURRENT_APP_VERSION = 'v3.2.0';
     if (localStorage.getItem('ielts_app_version') !== CURRENT_APP_VERSION) {
       localStorage.setItem('ielts_app_version', CURRENT_APP_VERSION);
       if ('caches' in window) {
@@ -348,10 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=3.0.0')
+        navigator.serviceWorker.register('./sw.js?v=3.2.0')
           .then((reg) => {
             reg.update();
-            console.log('IELTS Master: Service Worker Registered & Updated (v3.0.0)');
+            console.log('IELTS Master: Service Worker Registered & Updated (v3.2.0)');
           })
           .catch(err => console.log('SW registration note:', err));
       });
@@ -981,8 +981,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = container.querySelector('#force-cache-refresh-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async () => {
-        showToast('Önbellek temizleniyor ve en güncel müfredat yükleniyor...', 'info');
+        showToast('Önbellek temizleniyor ve yeni müfredat zorla indiriliyor...', 'info');
         try {
+          localStorage.removeItem('ielts_app_build');
+          localStorage.removeItem('ielts_word_cache');
           if ('caches' in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map(k => caches.delete(k)));
@@ -995,7 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.warn('Cache purge note:', e);
         }
         setTimeout(() => {
-          window.location.reload(true);
+          window.location.replace(window.location.pathname + '?v=3.2.0&force_reload=' + Date.now());
         }, 300);
       });
     }

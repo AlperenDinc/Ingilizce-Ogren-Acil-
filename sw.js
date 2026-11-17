@@ -1,17 +1,17 @@
-// IELTS 6.0 Academic Master - Service Worker (Offline Support & PWA - v3.0)
-const CACHE_NAME = 'ielts-master-v3.0.0';
+// IELTS 6.0 Academic Master - Service Worker (Offline Support & PWA - v3.2.0)
+const CACHE_NAME = 'ielts-master-v3.2.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles.css?v=3.0.0',
-  './app.js?v=3.0.0',
+  './styles.css?v=3.2.0',
+  './app.js?v=3.2.0',
   './manifest.json',
   './icon-192.svg',
   './icon-512.svg',
-  './data/curriculum.js?v=3.0.0',
-  './data/roots-affixes.js?v=3.0.0',
-  './data/irregular-verbs.js?v=3.0.0',
-  './data/study-guide.js?v=3.0.0'
+  './data/curriculum.js?v=3.2.0',
+  './data/roots-affixes.js?v=3.2.0',
+  './data/irregular-verbs.js?v=3.2.0',
+  './data/study-guide.js?v=3.2.0'
 ];
 
 // Install Event: Immediately skip waiting to take over
