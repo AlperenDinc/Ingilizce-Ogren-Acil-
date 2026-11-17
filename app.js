@@ -1751,21 +1751,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recordWordAnswer(q.id, isCorrect);
 
-    container.querySelectorAll('.quiz-option-btn').forEach(b => {
+    // Disable all options and remove conflicting background classes
+    const allBtns = container.querySelectorAll('.quiz-option-btn');
+    allBtns.forEach(b => {
       b.disabled = true;
+      b.style.pointerEvents = 'none';
+      b.classList.remove('bg-white', 'dark:bg-slate-900/50', 'hover:border-indigo-500');
+
+      // Highlight the correct option in emerald
       if (b.getAttribute('data-option') === q.correctMeaning) {
-        b.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600');
-        b.querySelector('i').className = 'fas fa-check-circle text-white';
+        b.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-800', 'dark:text-slate-200');
+        b.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600', 'shadow-md');
+        const icon = b.querySelector('i');
+        if (icon) icon.className = 'fas fa-check-circle text-white';
       }
     });
 
     if (isCorrect) {
       state.quizScore += 10;
     } else {
-      selectedBtn.classList.add('bg-rose-500', 'text-white', 'border-rose-600');
-      selectedBtn.querySelector('i').className = 'fas fa-times-circle text-white';
+      // Selected option was wrong: turn rose
+      selectedBtn.classList.remove('border-slate-200', 'dark:border-slate-700', 'text-slate-800', 'dark:text-slate-200');
+      selectedBtn.classList.add('bg-rose-500', 'text-white', 'border-rose-600', 'shadow-md');
+      const icon = selectedBtn.querySelector('i');
+      if (icon) icon.className = 'fas fa-times-circle text-white';
     }
 
+    // Exactly 1-second (1000ms) delay before moving to next question
     setTimeout(() => {
       if (state.currentQuizIndex < state.quizQuestions.length - 1) {
         state.currentQuizIndex++;
@@ -1785,7 +1797,7 @@ document.addEventListener('DOMContentLoaded', () => {
           renderSpeedQuizGame(container, getAllAccumulatedWords());
         });
       }
-    }, 1100);
+    }, 1000);
   }
 
   // --- SUB-VIEW 4: WORDS LIST WITH SRS BADGES (FIX #4 FOCUS PRESERVED) ---
