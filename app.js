@@ -1,4 +1,4 @@
-// IELTS Academic Master - Application Logic (Version 2.0)
+﻿// IELTS Academic Master - Application Logic (Version 2.0)
 // Infinite Learning Curriculum, Weekly Checkpoints, Spaced Repetition Engine,
 // Deep Grammar Tree with Live Search, 50+ Roots & Affixes, Text-to-Speech
 
@@ -335,10 +335,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- PWA & SERVICE WORKER ---
   function initMobileAndPWA() {
+    // Force cache bust & update check for Version 3.0.0
+    const CURRENT_APP_VERSION = 'v3.0.0';
+    if (localStorage.getItem('ielts_app_version') !== CURRENT_APP_VERSION) {
+      localStorage.setItem('ielts_app_version', CURRENT_APP_VERSION);
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(k => caches.delete(k));
+        });
+      }
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(() => console.log('IELTS Master: Service Worker Registered (Offline ready)'))
+        navigator.serviceWorker.register('./sw.js?v=3.0.0')
+          .then((reg) => {
+            reg.update();
+            console.log('IELTS Master: Service Worker Registered & Updated (v3.0.0)');
+          })
           .catch(err => console.log('SW registration note:', err));
       });
     }
@@ -614,11 +628,16 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
 
-          <!-- Quick Jump & Infinite Day Input -->
-          <div class="flex items-center gap-2">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Güne Atla:</label>
-            <input type="number" id="quick-day-input" min="1" value="${state.currentDay}" class="w-20 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 border-none text-slate-800 dark:text-white text-sm font-bold text-center focus:ring-2 focus:ring-indigo-500">
-            <button id="quick-day-go-btn" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Git</button>
+          <!-- Quick Jump & Infinite Day Input & Cache Refresh -->
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="force-cache-refresh-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1.5" title="Önbelleği Temizle & Yeni Müfredatı Zorla Yükle">
+              <i class="fas fa-sync-alt text-xs"></i> <span>Müfredatı Yenile</span>
+            </button>
+            <div class="flex items-center gap-1">
+              <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Güne Atla:</label>
+              <input type="number" id="quick-day-input" min="1" value="${state.currentDay}" class="w-16 px-2 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 border-none text-slate-800 dark:text-white text-sm font-bold text-center focus:ring-2 focus:ring-indigo-500">
+              <button id="quick-day-go-btn" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">Git</button>
+            </div>
           </div>
         </div>
     `;
@@ -826,13 +845,16 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
                 <i class="fas fa-book-reader mr-1"></i> İnteraktif Okuma Paragrafı
               </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                . Gün Özel Metni
+              </span>
             </div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-1">${dayData.reading.title}</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">${dayData.reading.titleTr}</p>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1.5"></h3>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400"></p>
           </div>
 
           <button id="toggle-passage-speech-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${state.isReadingAloud ? 'bg-rose-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
@@ -952,6 +974,29 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('ielts_current_day', state.currentDay);
           renderApp();
         }
+      });
+    }
+
+    // Force Cache Refresh Button
+    const refreshBtn = container.querySelector('#force-cache-refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        showToast('Önbellek temizleniyor ve en güncel müfredat yükleniyor...', 'info');
+        try {
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+          }
+        } catch (e) {
+          console.warn('Cache purge note:', e);
+        }
+        setTimeout(() => {
+          window.location.reload(true);
+        }, 300);
       });
     }
 

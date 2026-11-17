@@ -1,29 +1,32 @@
-// IELTS 6.0 Academic Master - Service Worker (Offline Support & PWA)
-const CACHE_NAME = 'ielts-master-v2.2';
+// IELTS 6.0 Academic Master - Service Worker (Offline Support & PWA - v3.0)
+const CACHE_NAME = 'ielts-master-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles.css?v=3.0.0',
+  './app.js?v=3.0.0',
   './manifest.json',
   './icon-192.svg',
   './icon-512.svg',
-  './data/curriculum.js',
-  './data/roots-affixes.js',
-  './data/irregular-verbs.js',
-  './data/study-guide.js'
+  './data/curriculum.js?v=3.0.0',
+  './data/roots-affixes.js?v=3.0.0',
+  './data/irregular-verbs.js?v=3.0.0',
+  './data/study-guide.js?v=3.0.0'
 ];
 
-// Install Event: Pre-cache assets
+// Install Event: Immediately skip waiting to take over
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        console.warn('Pre-cache partial error, continuing:', err);
+      });
+    })
   );
 });
 
-// Activate Event: Clear older caches
+// Activate Event: Clear ALL older caches immediately and claim clients
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -38,15 +41,13 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Event: Network first with Cache fallback
+// Fetch Event: Network-first with no-store to guarantee latest unique reading texts
 self.addEventListener('fetch', (e) => {
-  // Only handle GET requests
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-store' })
       .then((networkResponse) => {
-        // Cache external assets or latest app updates
         if (networkResponse && networkResponse.status === 200) {
           const resClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
@@ -56,7 +57,7 @@ self.addEventListener('fetch', (e) => {
       .catch(() => {
         return caches.match(e.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-          if (e.request.headers.get('accept').includes('text/html')) {
+          if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
             return caches.match('./index.html');
           }
         });

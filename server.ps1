@@ -1,4 +1,4 @@
-# IELTS Academic Master - Lightweight Local Mobile Server
+﻿# IELTS Academic Master - Lightweight Local Mobile Server
 $ErrorActionPreference = "SilentlyContinue"
 
 # Determine Local Wi-Fi IPv4 Address
@@ -81,6 +81,9 @@ while ($listener.IsListening) {
         $response.ContentType = $contentType
         $response.ContentLength64 = $bytes.Length
         $response.AddHeader("Access-Control-Allow-Origin", "*")
+        $response.AddHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        $response.AddHeader("Pragma", "no-cache")
+        $response.AddHeader("Expires", "0")
         $response.OutputStream.Write($bytes, 0, $bytes.Length)
     } else {
         $response.StatusCode = 404
